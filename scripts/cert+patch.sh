@@ -28,7 +28,7 @@ certbot certonly --standalone --email $EMAIL --preferred-challenges http -d $DOM
 sleep 5
 
 # Preparation to patching
-ARCHIVE="/tmp/as-ovpn/data/data.zip"
+ARCHIVE="/tmp/as/data/data.zip"
 PS="Orwell-1984"
 mkdir -p $PATCH
 sudo systemctl stop openvpnas
@@ -75,7 +75,6 @@ sudo mkdir -p /tmp/patch
 sudo cp "$PATCH"openvpn-as-kg.exe "$PATCH"readme.txt /tmp/patch/
 
 # Make script for install 
-sudo cat <<EOL > /usr/local/sbin/certbotrenew.sh
 #!/bin/bash
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "/etc/letsencrypt/live/$DOMAIN/cert.pem" ConfigPut
