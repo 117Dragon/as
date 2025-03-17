@@ -8,7 +8,7 @@ WF=/tmp/as/
 # path ovpnas
 AS=/usr/local/openvpn_as/lib/python/
 # Patch dir
-PDIR=/tmp/
+TDIR=/tmp/
 # Unzip dir
 UDIR=/tmp/data_zip/
 # Patching file
