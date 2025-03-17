@@ -1,13 +1,17 @@
-#!/bin/bash 
+#!/bin/bash
 
 # Variables
 # Get local ip-address
 ip_addr=$(ip a | grep -m 1 'scope global' | awk '{print $2}')
+# Work files
+WF=/tmp/as/
 # path ovpnas
 AS=/usr/local/openvpn_as/lib/python/
-# All files of patch
-PATCH=/tmp/patch/
-# Patch files
+# Patch dir
+PDIR=/tmp/
+# Unzip dir
+UDIR=/tmp/data_zip/
+# Patching file
 PFILE=pyovpn-2.0-py3.10.egg
 # Let's Encrypt path
 LPATH=/etc/letsencrypt/archive/
@@ -28,32 +32,30 @@ certbot certonly --standalone --email $EMAIL --preferred-challenges http -d $DOM
 sleep 5
 
 # Preparation to patching
-ARCHIVE="/tmp/as/data/data.zip"
-PS="Orwell-1984"
-mkdir -p $PATCH
 sudo systemctl stop openvpnas
-sudo cp $AS$PFILE $AS$PFILE 
-sudo cp $AS$PFILE $PATCH
-unzip $PATCH$PFILE -d "$PATCH"tmp
-unzip -P $PS $ARCHIVE -d $PATCH
+ARCHIVE="tmp/as/data/data.zip"
+PS="Orwell-1984"
+unzip -P $PS $ARCHIVE -d $TDIR
+sudo cp $AS$PFILE $TDIR
+unzip $TDIR$PFILE -d "$UDIR"py
 
 ## Preparation the nginx for SSL
 # Make directory for SSL
 sudo mkdir -p /etc/nginx/ssl/$DOMAIN
 
 # Make certificate for nginx
-sudo cat $LPATH$DOMAIN/cert1.pem $LPATH$DOMAIN/fullchain1.pem > $LPATH$DOMAIN/fullchain_nginx.pem 
+sudo cat $LPATH$DOMAIN/cert1.pem $LPATH$DOMAIN/fullchain1.pem > $LPATH$DOMAIN/fullchain_nginx.pem
 sudo mv $LPATH$DOMAIN/fullchain_nginx.pem /etc/nginx/ssl/$DOMAIN/
 sudo cp $LPATH$DOMAIN/privkey1.pem /etc/nginx/ssl/$DOMAIN/
 
 # Replace domain in nginx configs
-sed -i 's/example.com/'$DOMAIN'/g' "$PATCH"nginx/crt.conf "$PATCH"nginx/vhost.conf
+sed -i 's/example.com/'$DOMAIN'/g' "$UDIR"nginx/crt.conf "$UDIR"nginx/vhost.conf
 
 # Add symlink and remove default vHost
-sudo cp "$PATCH"nginx/crt.conf /etc/nginx/ssl/$DOMAIN/
-sudo cp "$PATCH"nginx/proxy.conf /etc/nginx/conf.d/
-sudo cp "$PATCH"nginx/ssl.conf /etc/nginx/conf.d/
-sudo cp "$PATCH"nginx/vhost.conf /etc/nginx/sites-available/$DOMAIN/
+sudo cp "$UDIR"nginx/crt.conf /etc/nginx/ssl/$DOMAIN/
+sudo cp "$UDIR"nginx/proxy.conf /etc/nginx/conf.d/
+sudo cp "$UDIR"nginx/ssl.conf /etc/nginx/conf.d/
+sudo cp "$UDIR"nginx/vhost.conf /etc/nginx/sites-available/$DOMAIN/
 sudo ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
 sudo rm /etc/nginx/sites-enabled/default
 sudo systemctl start nginx
@@ -64,17 +66,17 @@ sudo rm /etc/nginx/sites-enabled/default
 sudo systemctl start nginx
 
 # Replace
-cp "$PATCH"patch/info.pyc "$PATCH"tmp/pyovpn/lic/info.pyc
+cp "$UDIR"patch/info.pyc "UDIR"py/pyovpn/lic/info.pyc
 
 # Make .egg and patching
-zip -r "$PATCH"tmp/patch/$PFILE /tmp/temp_egg/*
-sudo cp /tmp/$PFILE /usr/local/openvpn_as/lib/python/$PFILE
+zip -r "$UDIR"$PFILE "$UDIR"py/*
+sudo cp "$UDIR"$PFILE "$AS"$PFILE
 
 # Save file for next download
-sudo mkdir -p /tmp/patch
-sudo cp "$PATCH"openvpn-as-kg.exe "$PATCH"readme.txt /tmp/patch/
+sudo mkdir -p /tmp/README-AS
+sudo cp "$UDIR"openvpn-as-kg.exe "$UDIR"readme.txt /tmp/README-AS/
 
-# Make script for install 
+# Make script for install
 #!/bin/bash
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "/etc/letsencrypt/live/$DOMAIN/cert.pem" ConfigPut
@@ -96,7 +98,7 @@ sudo echo "0 8 1 * * /usr/local/sbin/certbotrenew.sh" >> /etc/crontab
 sudo systemctl start openvpnas
 
 # Remove template dir
-#rm -rf /tmp/temp_egg /tmp/temp_patch/
+#rm -rf $UDIR $WF
 
 # Information message
 echo "*******************************************************************************************************************************"
