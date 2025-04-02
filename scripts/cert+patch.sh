@@ -7,8 +7,6 @@ ip_addr=$(ip a | grep -m 1 'scope global' | awk '{print $2}')
 WF=/tmp/as/
 # path ovpnas
 AS=/usr/local/openvpn_as/lib/python/
-# Patch dir
-TDIR=/tmp/
 # Unzip dir
 UDIR=/tmp/data_zip/
 # Patching file
@@ -37,7 +35,7 @@ ARCHIVE="tmp/as/data/data.zip"
 PS="Orwell-1984"
 unzip -P $PS $ARCHIVE -d $TDIR
 sudo cp $AS$PFILE $TDIR
-unzip $TDIR$PFILE -d "$UDIR"py
+unzip /tmp/$PFILE -d "$UDIR"py
 
 ## Preparation the nginx for SSL
 # Make directory for SSL
@@ -66,7 +64,7 @@ sudo rm /etc/nginx/sites-enabled/default
 sudo systemctl start nginx
 
 # Replace
-cp "$UDIR"patch/info.pyc "UDIR"py/pyovpn/lic/info.pyc
+cp "$UDIR"patch/info.pyc "$UDIR"py/pyovpn/lic/info.pyc
 
 # Make .egg and patching
 zip -r "$UDIR"$PFILE "$UDIR"py/*
