@@ -22,14 +22,13 @@ echo "*************************************************************************
 ****  Don't forget to open or redirect port 80 for the OpenVPN Server  **
 *************************************************************************
 *************************************************************************"
-sleep 10
+sleep 5
 
 echo "Enter domain for create a certificate"
 read DOMAIN
 echo "Enter your e-mail for renewal and security notices"
 read EMAIL
 certbot certonly --standalone --non-interactive --agree-tos --email $EMAIL --preferred-challenges http -d $DOMAIN
-sleep 5
 
 # Preparation to patching
 sudo systemctl stop openvpnas
@@ -80,15 +79,14 @@ sudo mkdir -p /tmp/README-OVPNAS
 sudo cp "$UDIR"patch/openvpn-as-kg.exe "$UDIR"patch/readme.txt /tmp/README-OVPNAS/
 
 # Make script for install
-cat <<EOL> > /usr/local/sbin/certbotrenew.sh
+cat <<'EOF' >>/usr/local/sbin/certbotrenew.sh
 #!/bin/bash
 
 /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ConfigPut
 /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "/etc/letsencrypt/live/$DOMAIN/cert.pem" ConfigPut
 /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file "/etc/letsencrypt/live/$DOMAIN/chain.pem" ConfigPut
 /usr/local/openvpn_as/scripts/sacli start
-
-EOL
+EOF
 
 sleep 3
 
