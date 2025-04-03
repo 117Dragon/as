@@ -3,12 +3,14 @@
 # Variables
 # Get local ip-address
 ip_addr=$(ip a | grep -m 1 'scope global' | awk '{print $2}')
-# Work files
-WF=/tmp/as/
+# Work direcrory
+WD=/tmp/as/
+# data temp dir
+TDIR=/tmp/as/temp/
+# Unzip data dir
+UDIR=/tmp/as/temp/data_zip/
 # path ovpnas
 AS=/usr/local/openvpn_as/lib/python/
-# Unzip dir
-UDIR=/tmp/data_zip/
 # Patching file
 PFILE=pyovpn-2.0-py3.10.egg
 # Let's Encrypt path
@@ -31,11 +33,14 @@ sleep 5
 
 # Preparation to patching
 sudo systemctl stop openvpnas
-ARCHIVE="tmp/as/data/data.zip"
+ARCHIVE="/tmp/as/data/data.zip"
 PS="Orwell-1984"
+# Unzip data (UDIR=data_zip)
 unzip -P $PS $ARCHIVE -d $TDIR
+# Copy original ".egg"
 sudo cp $AS$PFILE $TDIR
-unzip /tmp/$PFILE -d "$UDIR"py
+# Unzip original ".egg"
+unzip "$UDIR"$PFILE -d "$TDIR"egg
 
 ## Preparation the nginx for SSL
 # Make directory for SSL
@@ -64,10 +69,10 @@ sudo rm /etc/nginx/sites-enabled/default
 sudo systemctl start nginx
 
 # Replace
-cp "$UDIR"patch/info.pyc "$UDIR"py/pyovpn/lic/info.pyc
+cp "$UDIR"patch/info.pyc "$TDIR"egg/pyovpn/lic/info.pyc
 
 # Make .egg and patching
-zip -r "$UDIR"$PFILE "$UDIR"py/*
+zip -r "$WD"$PFILE "$TDIR"egg/*
 sudo cp "$UDIR"$PFILE "$AS"$PFILE
 
 # Save file for next download
@@ -96,16 +101,16 @@ sudo echo "0 8 1 * * /usr/local/sbin/certbotrenew.sh" >> /etc/crontab
 sudo systemctl start openvpnas
 
 # Remove template dir
-#rm -rf $UDIR $WF
+#rm -rf $WD
 
 # Information message
 echo "*******************************************************************************************************************************"
-sudo grep -A 1 -B 1 "Client" /usr/local/openvpn_as/init.log\n
+sudo grep -A 1 -B 1 "Client" /usr/local/openvpn_as/init.log
 echo "*********************************************************************************************************************************
 ****  !!!!!  Auth on https://$ip_addr:943/admin  ********************************************************************************
 ****  !!!!!  Be sure to replace the value with your own (domain):  **************************************************************
 ****  !!!!!  Admin  UI - Network Setting - Hostname to your previously specified domain:   **************************************
 *********************************************************************************************************************************
 *********************************************************************************************************************************
-****  !!!!!  Download patch from "/tmp/patch"  **********************************************************************************
+****  !!!!!  Download patch from "/tmp/README-AS/"  *****************************************************************************
 *********************************************************************************************************************************"
