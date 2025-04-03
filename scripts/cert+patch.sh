@@ -87,6 +87,9 @@ sudo systemctl start openvpnas
 sudo cat <<'EOF' >>/usr/local/sbin/certbotrenew.sh
 #!/bin/bash
 
+certbot renew --renew-by-default
+sleep 30
+
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "/etc/letsencrypt/live/$DOMAIN/cert.pem" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file "/etc/letsencrypt/live/$DOMAIN/chain.pem" ConfigPut
