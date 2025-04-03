@@ -36,8 +36,9 @@ ARCHIVE="/tmp/as/data/data.zip"
 PS="Orwell-1984"
 # Unzip data (UDIR=data_zip)
 unzip -P $PS $ARCHIVE -d $TDIR
-# Copy original ".egg"
-sudo cp $AS$PFILE "$UDIR"patch
+# Backup and copy original ".egg"
+sudo cp $AS$PFILE "$AS$PFILE"_
+sudo cp $AS$PFILE "$TDIR"patch
 ## Unzip original ".egg"
 ##unzip "$TDIR"$PFILE -d "$TDIR"egg
 
