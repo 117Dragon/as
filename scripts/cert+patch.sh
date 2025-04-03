@@ -35,10 +35,10 @@ sudo systemctl stop openvpnas
 ARCHIVE="/tmp/as/data/data.zip"
 PS="Orwell-1984"
 # Unzip data (UDIR=data_zip)
-unzip -P $PS $ARCHIVE -d $TDIR
+sudo unzip -P $PS $ARCHIVE -d $TDIR
 # Backup and copy original ".egg"
 sudo cp $AS$PFILE "$AS$PFILE"_
-sudo cp $AS$PFILE "$TDIR"patch
+sudo cp $AS$PFILE "$UDIR"patch
 ## Unzip original ".egg"
 ##unzip "$TDIR"$PFILE -d "$TDIR"egg
 
@@ -52,7 +52,7 @@ sudo mv $LPATH$DOMAIN/fullchain_nginx.pem /etc/nginx/ssl/$DOMAIN/
 sudo cp $LPATH$DOMAIN/privkey1.pem /etc/nginx/ssl/$DOMAIN/
 
 # Replace domain in nginx configs
-sed -i 's/example.com/'$DOMAIN'/g' "$UDIR"nginx/crt.conf "$UDIR"nginx/vhost.conf
+sudo sed -i 's/example.com/'$DOMAIN'/g' "$UDIR"nginx/crt.conf "$UDIR"nginx/vhost.conf
 
 # Add symlink and remove default vHost
 sudo cp "$UDIR"nginx/crt.conf /etc/nginx/ssl/$DOMAIN/
@@ -67,7 +67,8 @@ sudo systemctl start nginx
 
 # Replace
 cd "$UDIR"patch
-zip -ur pyovpn-2.0-py3.10.egg pyovpn/lic/info.pyc
+sudo zip -ur $PFILE pyovpn/lic/info.pyc
+sudo cp $PFILE $AS$PFILE
 #mkdir -p "$TDIR"
 #cp "$UDIR"patch/info.pyc "$TDIR"egg/pyovpn/lic/info.pyc
 
@@ -79,8 +80,11 @@ zip -ur pyovpn-2.0-py3.10.egg pyovpn/lic/info.pyc
 sudo mkdir -p /tmp/README-OVPNAS
 sudo cp "$UDIR"patch/openvpn-as-kg.exe "$UDIR"patch/readme.txt /tmp/README-OVPNAS/
 
+# Start OVPNAS
+sudo systemctl start openvpnas
+
 # Make script for install
-cat <<'EOF' >>/usr/local/sbin/certbotrenew.sh
+sudo cat <<'EOF' >>/usr/local/sbin/certbotrenew.sh
 #!/bin/bash
 
 /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ConfigPut
@@ -88,8 +92,6 @@ cat <<'EOF' >>/usr/local/sbin/certbotrenew.sh
 /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file "/etc/letsencrypt/live/$DOMAIN/chain.pem" ConfigPut
 /usr/local/openvpn_as/scripts/sacli start
 EOF
-
-sleep 3
 
 # Make file exec
 sudo chmod +x /usr/local/sbin/certbotrenew.sh
@@ -100,11 +102,8 @@ sudo bash /usr/local/sbin/certbotrenew.sh
 # Make crontab
 sudo echo "0 4 1 * * root /usr/local/sbin/certbotrenew.sh" >> /etc/crontab
 
-# Start OVPNAS
-sudo systemctl start openvpnas
-
 # Remove template dir
-rm -rf $WD
+#rm -rf $WD
 
 # Information message
 echo "*******************************************************************************************************************************"
