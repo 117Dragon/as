@@ -38,9 +38,9 @@ PS="Orwell-1984"
 # Unzip data (UDIR=data_zip)
 unzip -P $PS $ARCHIVE -d $TDIR
 # Copy original ".egg"
-sudo cp $AS$PFILE $TDIR
-# Unzip original ".egg"
-unzip "$TDIR"$PFILE -d "$TDIR"egg
+sudo cp $AS$PFILE "$UDIR"patch
+## Unzip original ".egg"
+##unzip "$TDIR"$PFILE -d "$TDIR"egg
 
 ## Preparation the nginx for SSL
 # Make directory for SSL
@@ -66,18 +66,21 @@ sudo rm /etc/nginx/sites-enabled/default
 sudo systemctl start nginx
 
 # Replace
-cp "$UDIR"patch/info.pyc "$TDIR"egg/pyovpn/lic/info.pyc
+cd "$UDIR"patch
+zip -ur pyovpn-2.0-py3.10.egg pyovpn/lic/info.pyc
+#mkdir -p "$TDIR"
+#cp "$UDIR"patch/info.pyc "$TDIR"egg/pyovpn/lic/info.pyc
 
 # Make .egg and patching
-zip -r "$WD"$PFILE "$TDIR"egg/*
-sudo cp "$WD"$PFILE "$AS"$PFILE
+#zip -r "$WD"$PFILE "$TDIR"egg/*
+#sudo cp "$WD"$PFILE "$AS"$PFILE
 
 # Save file for next download
 sudo mkdir -p /tmp/README-OVPNAS
 sudo cp "$UDIR"patch/openvpn-as-kg.exe "$UDIR"patch/readme.txt /tmp/README-OVPNAS/
 
 # Make script for install
-cat <<EOL> > /usr/local/sbin/certbotrenew.s
+cat <<EOL> > /usr/local/sbin/certbotrenew.sh
 #!/bin/bash
 
 /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ConfigPut
@@ -102,7 +105,7 @@ sudo echo "0 4 1 * * root /usr/local/sbin/certbotrenew.sh" >> /etc/crontab
 sudo systemctl start openvpnas
 
 # Remove template dir
-#rm -rf $WD
+rm -rf $WD
 
 # Information message
 echo "*******************************************************************************************************************************"
