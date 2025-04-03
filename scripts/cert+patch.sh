@@ -73,16 +73,20 @@ zip -r "$WD"$PFILE "$TDIR"egg/*
 sudo cp "$WD"$PFILE "$AS"$PFILE
 
 # Save file for next download
-sudo mkdir -p /tmp/README-AS
-sudo cp "$UDIR"openvpn-as-kg.exe "$UDIR"readme.txt /tmp/README-AS/
+sudo mkdir -p /tmp/README-OVPNAS
+sudo cp "$UDIR"patch/openvpn-as-kg.exe "$UDIR"patch/readme.txt /tmp/README-OVPNAS/
 
 # Make script for install
+cat <<EOL> > /usr/local/sbin/certbotrenew.s
 #!/bin/bash
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "/etc/letsencrypt/live/$DOMAIN/cert.pem" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file "/etc/letsencrypt/live/$DOMAIN/chain.pem" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli start
+
+/usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ConfigPut
+/usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "/etc/letsencrypt/live/$DOMAIN/cert.pem" ConfigPut
+/usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file "/etc/letsencrypt/live/$DOMAIN/chain.pem" ConfigPut
+/usr/local/openvpn_as/scripts/sacli start
+
 EOL
+
 sleep 3
 
 # Make file exec
@@ -92,7 +96,7 @@ sudo chmod +x /usr/local/sbin/certbotrenew.sh
 sudo bash /usr/local/sbin/certbotrenew.sh
 
 # Make crontab
-sudo echo "0 8 1 * * /usr/local/sbin/certbotrenew.sh" >> /etc/crontab
+sudo echo "0 4 1 * * root /usr/local/sbin/certbotrenew.sh" >> /etc/crontab
 
 # Start OVPNAS
 sudo systemctl start openvpnas
