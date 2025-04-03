@@ -28,7 +28,7 @@ echo "Enter domain for create a certificate"
 read DOMAIN
 echo "Enter your e-mail for renewal and security notices"
 read EMAIL
-certbot certonly --standalone --email $EMAIL --preferred-challenges http -d $DOMAIN
+certbot certonly --standalone --non-interactive --agree-tos --email $EMAIL --preferred-challenges http -d $DOMAIN
 sleep 5
 
 # Preparation to patching
