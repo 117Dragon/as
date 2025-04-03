@@ -40,7 +40,7 @@ unzip -P $PS $ARCHIVE -d $TDIR
 # Copy original ".egg"
 sudo cp $AS$PFILE $TDIR
 # Unzip original ".egg"
-unzip "$UDIR"$PFILE -d "$TDIR"egg
+unzip "$TDIR"$PFILE -d "$TDIR"egg
 
 ## Preparation the nginx for SSL
 # Make directory for SSL
@@ -58,10 +58,7 @@ sed -i 's/example.com/'$DOMAIN'/g' "$UDIR"nginx/crt.conf "$UDIR"nginx/vhost.conf
 sudo cp "$UDIR"nginx/crt.conf /etc/nginx/ssl/$DOMAIN/
 sudo cp "$UDIR"nginx/proxy.conf /etc/nginx/conf.d/
 sudo cp "$UDIR"nginx/ssl.conf /etc/nginx/conf.d/
-sudo cp "$UDIR"nginx/vhost.conf /etc/nginx/sites-available/$DOMAIN/
-sudo ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
-sudo rm /etc/nginx/sites-enabled/default
-sudo systemctl start nginx
+sudo cp "$UDIR"nginx/vhost.conf /etc/nginx/sites-available/$DOMAIN
 
 # Add symlink and remove default vHost
 sudo ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
@@ -73,7 +70,7 @@ cp "$UDIR"patch/info.pyc "$TDIR"egg/pyovpn/lic/info.pyc
 
 # Make .egg and patching
 zip -r "$WD"$PFILE "$TDIR"egg/*
-sudo cp "$UDIR"$PFILE "$AS"$PFILE
+sudo cp "$WD"$PFILE "$AS"$PFILE
 
 # Save file for next download
 sudo mkdir -p /tmp/README-AS
