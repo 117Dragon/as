@@ -4,19 +4,19 @@
 # Get local ip-address
 ip_addr=$(ip a | grep -m 1 'scope global' | awk '{print $2}')
 # Work direcrory
-WD=/tmp/as/
+WD=/tmp/as
 # Data temp dir
-TDIR=/tmp/as/temp/
+TDIR=/tmp/as/temp
 # Unzip data dir
-UDIR=/tmp/as/temp/data_zip/
+UDIR=/tmp/as/temp/data_zip
 # Patching file
 PFILE=pyovpn-2.0-py3.10.egg
 # Let's Encrypt path
-LPATH=/etc/letsencrypt/archive/
+LPATH=/etc/letsencrypt/archive
 # Let's Encrypt certificates directory
 SSLDIR=/etc/letsencrypt/live/$DOMAIN
 # Path ovpnas
-AS=/usr/local/openvpn_as/lib/python/
+AS=/usr/local/openvpn_as/lib/python
 
 # Create certificates
 echo "*************************************************************************
@@ -33,9 +33,9 @@ read EMAIL
 certbot certonly --standalone --non-interactive --agree-tos --email $EMAIL --preferred-challenges http -d $DOMAIN
 
 # Set variables latest generated Let's Encrypt certificates
-LPK=$(sudo find '$SSLDIR'$DOMAIN -type f | grep "privkey" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
-LCRT=$(sudo find '$SSLDIR'$DOMAIN -type f | grep "cert" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
-LCHN=$(sudo find '$SSLDIR'$DOMAIN -type f | grep "chain" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+LPK=$(sudo find $SSLDIR -type f | grep "privkey" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+LCRT=$(sudo find $SSLDIR -type f | grep "cert" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+LCHN=$(sudo find $SSLDIR -type f | grep "chain" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
 
 # Preparation to patching
 sudo systemctl stop openvpnas
@@ -44,24 +44,24 @@ PS="Orwell-1984"
 # Unzip data (UDIR=data_zip)
 sudo unzip -P $PS $ARCHIVE -d $TDIR
 # Backup and copy original ".egg"
-sudo cp '$AS'$PFILE "$AS$PFILE".bak
-sudo cp '$AS'$PFILE "$UDIR"patch
+sudo cp $AS/$PFILE $AS/$PFILE.bak
+sudo cp $AS/$PFILE $UDIR/patch
 
 # Make directory for nginx SSL
 sudo mkdir -p /etc/nginx/ssl/$DOMAIN
 
 # Make certificate for nginx
-sudo cat '$LPATH'$DOMAIN/$LCRT $LPATH'$DOMAIN'/$LCHN > '$LPATH'$DOMAIN/'$DOMAIN'_fullchain.pem
-sudo mv '$LPATH'$DOMAIN/'$DOMAIN'_fullchain.pem /etc/nginx/ssl/$DOMAIN/
-sudo cp '$LPATH'$DOMAIN/$LPK /etc/nginx/ssl/$DOMAIN/
+sudo cat $LPATH/$DOMAIN/$LCRT $LPATH'$DOMAIN'/$LCHN > $LPATH/$DOMAIN/"$DOMAIN"_fullchain.pem
+sudo mv $LPATH/$DOMAIN/"$DOMAIN"_fullchain.pem /etc/nginx/ssl/$DOMAIN/
+sudo cp $LPATH/$DOMAIN/$LPK /etc/nginx/ssl/$DOMAIN/
 
 # Replace domain in nginx configs
-sudo sed -i 's/example.com/'$DOMAIN'/g' "$UDIR"nginx/crt.conf "$UDIR"nginx/vhost.conf
+sudo sed -i 's/example.com/'$DOMAIN'/g' $UDIR/nginx/crt.conf $UDIR/nginx/vhost.conf
 
 # Add symlink and remove default vHost
-sudo cp '$UDIR'nginx/crt.conf /etc/nginx/ssl/$DOMAIN/
-sudo cp '$UDIR'nginx/proxy.conf '$UDIR'nginx/ssl.conf /etc/nginx/conf.d/
-sudo cp '$UDIR'nginx/vhost.conf /etc/nginx/sites-available/$DOMAIN
+sudo cp $UDIR/nginx/crt.conf /etc/nginx/ssl/$DOMAIN/
+sudo cp $UDIR/nginx/proxy.conf $UDIR/nginx/ssl.conf /etc/nginx/conf.d/
+sudo cp $UDIR/nginx/vhost.conf /etc/nginx/sites-available/$DOMAIN
 
 # Add symlink and remove default vHost
 sudo ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
@@ -69,21 +69,21 @@ sudo rm /etc/nginx/sites-enabled/default
 sudo systemctl start nginx
 
 # Replace
-cd "$UDIR"patch
+cd $UDIR/patch
 sudo zip -ur $PFILE pyovpn/lic/info.pyc
-sudo cp $PFILE $AS$PFILE
+sudo cp $PFILE $AS/$PFILE
 
 # Save file for next download
 sudo mkdir -p /tmp/README-OVPNAS
-sudo cp "$UDIR"patch/openvpn-as-kg.exe "$UDIR"patch/readme.txt /tmp/README-OVPNAS/
+sudo cp $UDIR/patch/openvpn-as-kg.exe $UDIR/patch/readme.txt /tmp/README-OVPNAS/
 
 # Start OVPNAS
 sudo systemctl start openvpnas
 
 # Set OPVNAS https certificate
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "'$SSLDIR'$DOMAIN/$LPK" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "'$SSLDIR'$DOMAIN/$LCRT" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "'$SSLDIR'$DOMAIN/$LCHN" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "$SSLDIR/$DOMAIN/$LPK" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "$SSLDIR/$DOMAIN/$LCRT" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "$SSLDIR/$DOMAIN/$LCHN" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli start
 
 # Make script for install
@@ -93,9 +93,9 @@ sudo cat <<'EOF' >>/usr/local/sbin/certbotrenew.sh
 certbot renew --renew-by-default
 sleep 30
 
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "'$SSLDIR'$DOMAIN'/$LPK'" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "'$SSLDIR'$DOMAIN'/$LCRT'" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "'$SSLDIR'$DOMAIN'/$LCHN'" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "$SSLDIR/$DOMAIN/$LPK" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "$SSLDIR/$DOMAIN/$LCRT" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "$SSLDIR/$DOMAIN/$LCHN" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli start
 EOF
 
