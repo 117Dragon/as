@@ -51,7 +51,7 @@ sudo cp $AS/$PFILE $UDIR/patch
 sudo mkdir -p /etc/nginx/ssl/$DOMAIN
 
 # Make certificate for nginx
-sudo cat $LPATH/$DOMAIN/$LCRT $LPATH'$DOMAIN'/$LCHN > $LPATH/$DOMAIN/"$DOMAIN"_fullchain.pem
+sudo cat $LPATH/$DOMAIN/$LCRT $LPATH/$DOMAIN/$LCHN > $LPATH/$DOMAIN/"$DOMAIN"_fullchain.pem
 sudo mv $LPATH/$DOMAIN/"$DOMAIN"_fullchain.pem /etc/nginx/ssl/$DOMAIN/
 sudo cp $LPATH/$DOMAIN/$LPK /etc/nginx/ssl/$DOMAIN/
 
