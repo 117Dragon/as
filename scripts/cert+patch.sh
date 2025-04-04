@@ -1,20 +1,22 @@
 #!/bin/bash
 
-# Variables
+# Set variables
 # Get local ip-address
 ip_addr=$(ip a | grep -m 1 'scope global' | awk '{print $2}')
 # Work direcrory
 WD=/tmp/as/
-# data temp dir
+# Data temp dir
 TDIR=/tmp/as/temp/
 # Unzip data dir
 UDIR=/tmp/as/temp/data_zip/
-# path ovpnas
-AS=/usr/local/openvpn_as/lib/python/
 # Patching file
 PFILE=pyovpn-2.0-py3.10.egg
 # Let's Encrypt path
 LPATH=/etc/letsencrypt/archive/
+# Let's Encrypt certificates directory
+SSLDIR=/etc/letsencrypt/live/$DOMAIN
+# Path ovpnas
+AS=/usr/local/openvpn_as/lib/python/
 
 # Create certificates
 echo "*************************************************************************
@@ -39,11 +41,8 @@ sudo unzip -P $PS $ARCHIVE -d $TDIR
 # Backup and copy original ".egg"
 sudo cp $AS$PFILE "$AS$PFILE"_
 sudo cp $AS$PFILE "$UDIR"patch
-## Unzip original ".egg"
-##unzip "$TDIR"$PFILE -d "$TDIR"egg
 
-## Preparation the nginx for SSL
-# Make directory for SSL
+# Make directory for nginx SSL
 sudo mkdir -p /etc/nginx/ssl/$DOMAIN
 
 # Make certificate for nginx
@@ -69,12 +68,6 @@ sudo systemctl start nginx
 cd "$UDIR"patch
 sudo zip -ur $PFILE pyovpn/lic/info.pyc
 sudo cp $PFILE $AS$PFILE
-#mkdir -p "$TDIR"
-#cp "$UDIR"patch/info.pyc "$TDIR"egg/pyovpn/lic/info.pyc
-
-# Make .egg and patching
-#zip -r "$WD"$PFILE "$TDIR"egg/*
-#sudo cp "$WD"$PFILE "$AS"$PFILE
 
 # Save file for next download
 sudo mkdir -p /tmp/README-OVPNAS
@@ -83,22 +76,33 @@ sudo cp "$UDIR"patch/openvpn-as-kg.exe "$UDIR"patch/readme.txt /tmp/README-OVPNA
 # Start OVPNAS
 sudo systemctl start openvpnas
 
+# Set SSL object variables
+PK=$(sudo find '$SSLDIR'$DOMAIN -type f | grep "privkey" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+CRT=$(sudo find '$SSLDIR'$DOMAIN -type f | grep "cert" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+CHN=$(sudo find '$SSLDIR'$DOMAIN -type f | grep "chain" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+
 # Set OPVNAS https certificate
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey1.pem" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "/etc/letsencrypt/live/$DOMAIN/cert1.pem" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file "/etc/letsencrypt/live/$DOMAIN/chain1.pem" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "'$SSLDIR'$DOMAIN'$PK'" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "'$SSLDIR'$DOMAIN'$CRT'" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "'$SSLDIR'$DOMAIN'$CHN'" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli start
+
+# Make temp dir for invalidate certificates
+sudo mkdir -p "$SSLDIR"tmp
 
 # Make script for install
 sudo cat <<'EOF' >>/usr/local/sbin/certbotrenew.sh
 #!/bin/bash
 
+# Save  files
+sudo mv "$SSL"$DOMAIN"/* "$SSLDIR"tmp
+
 certbot renew --renew-by-default
 sleep 30
 
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "/etc/letsencrypt/live/$DOMAIN/privkey1.pem" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "/etc/letsencrypt/live/$DOMAIN/cert1.pem" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file "/etc/letsencrypt/live/$DOMAIN/chain1.pem" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "'$SSLDIR'$DOMAIN'$PK'" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "'$SSLDIR'$DOMAIN'$CRT'" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "'$SSLDIR'$DOMAIN'$CHN'" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli start
 EOF
 
