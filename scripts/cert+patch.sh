@@ -48,8 +48,8 @@ sudo cp $AS/$PFILE $UDIR/patch
 sudo mkdir -p /etc/nginx/ssl/$DOMAIN
 
 # Make certificate for nginx
-sudo cat $LPATH/$DOMAIN/$LCRT $LPATH/$DOMAIN/$LCHN > $LPATH/$DOMAIN/"$DOMAIN"_fullchain.pem
-sudo mv $LPATH/$DOMAIN/"$DOMAIN"_fullchain.pem /etc/nginx/ssl/$DOMAIN/
+sudo cat $LPATH/$DOMAIN/$LCRT $LPATH/$DOMAIN/$LCHN > /etc/nginx/ssl/$DOMAIN/"$DOMAIN"_fullchain.pem
+#sudo mv $LPATH/$DOMAIN/"$DOMAIN"_fullchain.pem /etc/nginx/ssl/$DOMAIN/
 sudo cp $LPATH/$DOMAIN/$LPK /etc/nginx/ssl/$DOMAIN/
 
 # Replace domain in nginx configs
@@ -87,13 +87,24 @@ sudo /usr/local/openvpn_as/scripts/sacli start
 sudo cat <<EOF >>/usr/local/sbin/certbotrenew.sh
 #!/bin/bash
 
+# Renew Let's Encrypt certificate
 certbot renew --renew-by-default
 sleep 30
 
+# Setup new certificate to OVPNAS
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "$LPATH/$DOMAIN/$LPK" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "$LPATH/$DOMAIN/$LCRT" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "$LPATH/$DOMAIN/$LCHN" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli start
+
+# Backup and setup new certificate to nginx
+DATE=$(date +%Y%m%d)
+sudo mkdir -p /etc/nginx/ssl/temp/$DOMAIN-$DATE
+sudo mv /etc/nginx/ssl/$DOMAIN/* /etc/nginx/ssl/temp/$DOMAIN-$DATE
+sudo cat $LPATH/$DOMAIN/$LCRT $LPATH/$DOMAIN/$LCHN > /etc/nginx/ssl/$DOMAIN/"$DOMAIN"_fullchain.pem
+sudo cp $LPATH/$DOMAIN/$LPK /etc/nginx/ssl/$DOMAIN/
+sudo systemctl restart nginx
+
 EOF
 
 # Make file exec
