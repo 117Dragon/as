@@ -13,8 +13,6 @@ UDIR=/tmp/as/temp/data_zip
 PFILE=pyovpn-2.0-py3.10.egg
 # Let's Encrypt path
 LPATH=/etc/letsencrypt/archive
-# Let's Encrypt certificates directory
-SSLDIR=/etc/letsencrypt/live/$DOMAIN
 # Path ovpnas
 AS=/usr/local/openvpn_as/lib/python
 
@@ -30,12 +28,12 @@ echo "Enter domain for create a certificate"
 read DOMAIN
 echo "Enter your e-mail for renewal and security notices"
 read EMAIL
-certbot certonly --standalone --non-interactive --agree-tos --email $EMAIL --preferred-challenges http -d $DOMAIN
+certbot certonly --standalone --email $EMAIL --preferred-challenges http -d $DOMAIN
 
 # Set variables latest generated Let's Encrypt certificates
-LPK=$(sudo find $SSLDIR -type f | grep "privkey" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
-LCRT=$(sudo find $SSLDIR -type f | grep "cert" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
-LCHN=$(sudo find $SSLDIR -type f | grep "chain" | xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+LPK=$(sudo find $LPATH/$DOMAIN -type f | grep "privkey" | sudo xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+LCRT=$(sudo find $LPATH/$DOMAIN -type f | grep "cert" | sudo xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
+LCHN=$(sudo find $LPATH/$DOMAIN -type f | grep "chain" | sudo xargs ls -t | head -n 1 | awk -F/ '{print $NF}')
 
 # Preparation to patching
 sudo systemctl stop openvpnas
@@ -81,21 +79,21 @@ sudo cp $UDIR/patch/openvpn-as-kg.exe $UDIR/patch/readme.txt /tmp/README-OVPNAS/
 sudo systemctl start openvpnas
 
 # Set OPVNAS https certificate
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "$SSLDIR/$DOMAIN/$LPK" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "$SSLDIR/$DOMAIN/$LCRT" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "$SSLDIR/$DOMAIN/$LCHN" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "$LPATH/$DOMAIN/$LPK" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "$LPATH/$DOMAIN/$LCRT" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "$LPATH/$DOMAIN/$LCHN" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli start
 
 # Make script for install
-sudo cat <<'EOF' >>/usr/local/sbin/certbotrenew.sh
+sudo cat <<EOF >>/usr/local/sbin/certbotrenew.sh
 #!/bin/bash
 
 certbot renew --renew-by-default
 sleep 30
 
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "$SSLDIR/$DOMAIN/$LPK" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "$SSLDIR/$DOMAIN/$LCRT" ConfigPut
-sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "$SSLDIR/$DOMAIN/$LCHN" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.priv_key" --value_file "$LPATH/$DOMAIN/$LPK" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.cert" --value_file "$LPATH/$DOMAIN/$LCRT" ConfigPut
+sudo /usr/local/openvpn_as/scripts/sacli --key "cs.ca_bundle" --value_file  "$LPATH/$DOMAIN/$LCHN" ConfigPut
 sudo /usr/local/openvpn_as/scripts/sacli start
 EOF
 
@@ -103,7 +101,7 @@ EOF
 sudo chmod +x /usr/local/sbin/certbotrenew.sh
 
 # Exec script
-sudo bash /usr/local/sbin/certbotrenew.sh
+#sudo bash /usr/local/sbin/certbotrenew.sh
 
 # Make crontab
 sudo echo "0 4 1 * * root /usr/local/sbin/certbotrenew.sh" >> /etc/crontab
