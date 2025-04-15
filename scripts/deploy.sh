@@ -66,7 +66,7 @@ echo "**************************************************************************
 sudo grep -A 1 -B 1 "Client" /usr/local/openvpn_as/init.log
 
 
-LDAP integration:
+echo "LDAP integration:
 https://openvpn.net/as-docs/tutorials/tutorial--active-directory-ldap.html#optional--limit-access-to-users-in-ldap-server-and-openvpn-access-server-user-permissions-table
 
 *****   Need create in LDAP the following groups: ovpnas-admins & ovpnas-users *****
