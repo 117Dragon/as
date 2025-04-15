@@ -58,21 +58,19 @@ sudo ./sacli start
 sudo systemctl start openvpnas
 
 # Remove template dir
-#rm -rf $WD
+rm -rf $WD
 
 # Information message
 echo "****************************************************************************************************************************************"
 
 sudo grep -A 1 -B 1 "Client" /usr/local/openvpn_as/init.log
 
-echo "Be sure to replace the value with your own (domain):
-Admin  UI - Network Setting - Hostname to your previously specified domain:
 
 LDAP integration:
 https://openvpn.net/as-docs/tutorials/tutorial--active-directory-ldap.html#optional--limit-access-to-users-in-ldap-server-and-openvpn-access-server-user-permissions-table
 
 *****   Need create in LDAP the following groups: ovpnas-admins & ovpnas-users *****
 
-Download patch from "/tmp/README-AS/"
+!!!!!   Download patch from "/tmp/README-AS/"    !!!!!
 
 *******************************************************************************************************************************************"
