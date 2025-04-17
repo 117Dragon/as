@@ -14,20 +14,6 @@ AS=/usr/local/openvpn_as/lib/python
 
 cd $WD
 
-# Install and setting up the Let's Encrypt
-while true; do
-    read -p "Do you want install and use Let's Encrypt certificate? (yes/no): " answer
-    if [[ "$answer" == "yes" ]]; then
-        echo "Install and set up Let's Encrypt"
-        sudo bash $WD/scripts/deploy_letsencrypt.sh
-	break
-    elif [[ "$answer" == "no" ]]; then
-	break
-    else
-        echo "Incorrect input. Please enter 'yes' or 'no'"
-    fi
-done
-
 # Preparation to patching
 sudo systemctl stop openvpnas
 ARCHIVE="/tmp/as/data/patch.zip"
@@ -49,16 +35,30 @@ sudo cp $TDIR/$PFILE $AS/$PFILE
 sudo mkdir -p /tmp/README-OVPNAS
 sudo cp $TDIR/patch/openvpn-as-kg.exe $TDIR/patch/readme.txt /tmp/README-OVPNAS/
 
+# Start OVPNAS
+sudo systemctl start openvpnas
+
+# Install and setting up the Let's Encrypt
+while true; do
+    read -p "Do you want install and use Let's Encrypt certificate? (yes/no): " answer
+    if [[ "$answer" == "yes" ]]; then
+        echo "Install and set up Let's Encrypt"
+        sudo bash $WD/scripts/deploy_letsencrypt.sh
+        break
+    elif [[ "$answer" == "no" ]]; then
+        break
+    else
+        echo "Incorrect input. Please enter 'yes' or 'no'"
+    fi
+done
+
 # LDAP post-auth script for group mappaing
 cd /usr/local/openvpn_as/scripts
 sudo ./sacli -k auth.module.post_auth_script --value_file=$TDIR/patch/ldap.py ConfigPut
 sudo ./sacli start
 
-# Start OVPNAS
-sudo systemctl start openvpnas
-
 # Remove template dir
-rm -rf $WD
+#rm -rf $WD
 
 # Information message
 echo "****************************************************************************************************************************************"
